@@ -3,7 +3,7 @@ ai_service:
   # 使用的AI模型名称
   model: "gemini-2.0-flash"
   # API访问密钥
-  api_key: "AIzaSyByAGHNc59sWQciRRhIuKRUKT9gLQdjiiA"
+  api_key: "API Key"
 
 # 图片处理配置
 image_processing:
