@@ -1,0 +1,9 @@
+Knees,((⏱️=2000)) Knees,((⏱️=2000)) We sit on our knees.((⏱️=4000))
+
+Feet,((⏱️=2000)) Feet,((⏱️=2000)) Look at my happy feet!((⏱️=4000))
+
+Toes,((⏱️=2000)) Toes,((⏱️=2000)) The baby is counting toes in the bath.((⏱️=4000))
+
+Body,((⏱️=2000)) Body,((⏱️=2000)) This is my body.((⏱️=4000))
+
+Skin,((⏱️=2000)) Skin,((⏱️=2000)) My skin is soft.((⏱️=4000))
