@@ -5,6 +5,10 @@ api_key = API Key
 model = qwen-plus
 timeout = 30
 
+# ^: 表示 Ctrl 键
+# !: 表示 Alt 键
+# #: 表示字母 Win键
+
 [Hotkey]
 translate = !t
 polish = ^p
