@@ -1,0 +1,16 @@
+# AI服务配置
+ai_service:
+  # 使用的AI模型名称
+  model: "gemini-2.0-flash"
+  # API访问密钥
+  api_key: "AIzaSyByAGHNc59sWQciRRhIuKRUKT9gLQdjiiA"
+
+# 图片处理配置
+image_processing:
+  # 支持的图片格式
+  supported_formats:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+  # 并发处理的最大图片数
+  max_concurrent: 5

@@ -1,0 +1,6 @@
+# 用户配置
+path_settings:
+  # 输入图片文件夹路径
+  input_dir: "F:\\Code\\image_to_text\\image"
+  # 输出Markdown文件路径
+  output_file: "result.md"

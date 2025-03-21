@@ -1,0 +1,43 @@
+[API]
+# base_url = https://api.openai.com/v1
+base_url = https://dashscope.aliyuncs.com/compatible-mode/v1
+api_key = API Key
+model = qwen-plus
+timeout = 30
+
+[Hotkey]
+translate = !t
+polish = ^p
+summarize = !s
+
+[GUI]
+width = 400
+height = 300
+font_size = 10
+font_name = Microsoft YaHei
+
+[Functions]
+# 为每个功能定义系统提示词和用户提示词模板
+# {text} 将被替换为实际的输入文本
+# {source_lang} 和 {target_lang} 会被实际的语言替换
+
+translate = {
+    "system_prompt": "You are a professional translator.",
+    "user_prompt": "Translate the following {source_lang} text to {target_lang}:\n{text}",
+    "temperature": 0.3,
+    "stream": false
+    }
+
+polish = {
+    "system_prompt": "You are a professional editor focused on improving text quality while maintaining the original meaning.",
+    "user_prompt": "Polish the following text to make it more professional and elegant, keeping the same language:\n{text}",
+    "temperature": 0.7,
+    "stream": false
+    }
+
+summarize = {
+    "system_prompt": "You are an expert at summarizing text concisely.",
+    "user_prompt": "Summarize the following text in a concise way:\n{text}",
+    "temperature": 0.5,
+    "stream": false
+    }
