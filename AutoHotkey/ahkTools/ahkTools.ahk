@@ -1,6 +1,17 @@
 #Requires AutoHotkey v2.0
 
-; 初始化
+; 作者：Lei
+; 日期：2023-12-15
+; 版本：1.0
+; 功能：AI文本工具一个基于AutoHotkey v2.0和AI服务的文本处理工具，支持文本翻译、润色等功能。
+; 1. 安装AutoHotkey v2.0。
+; 2. 将脚本保存为 .ahk 文件。
+; 3. 配置脚本中的AI服务地址和API密钥。
+; 4. 运行脚本。
+; 5. 按下热键（默认是 !t）来翻译文本。
+; 6. 按下热键（默认是 !p）来润色文本。
+
+
 #SingleInstance Force
 #Warn
 
@@ -200,3 +211,93 @@ ExitFunc(ExitReason, ExitCode) {
     if FileExist("result.txt")
         FileDelete("result.txt")
 }
+
+
+
+; Win+Z 打开 AutoHotkey 官网
+; #z::Run "https://www.autohotkey.com"
+
+; 功能一：Win+N 处理 Sublime Text
+#n::
+{
+    ; 尝试查找 Sublime Text 窗口
+    ; ahk_class PX_WINDOW_CLASS 是 Sublime Text 的窗口类名
+    sublimeWindow := WinExist("ahk_class PX_WINDOW_CLASS")
+    
+    if sublimeWindow  ; 如果窗口存在
+    {
+        ; 如果窗口最小化，恢复窗口
+        if WinGetMinMax("ahk_id " sublimeWindow) = -1
+            WinRestore("ahk_id " sublimeWindow)
+        
+        ; 激活窗口
+        WinActivate("ahk_id " sublimeWindow)
+    }
+    else  ; 如果窗口不存在，运行新实例
+    {
+        Run "C:\Users\Lei\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\sublime_text.lnk"
+    }
+}
+
+; 功能二：字符串插入
+; 1. 复制一段文字A之后，进行以下操作：
+;    - 在英文句号(.)或中文句号(。)后面添加字符串C。
+;    - 在其他标点符号后面添加字符串B。
+; 2. 按下cr字母后，粘贴修改后的文本
+
+B := "((⏱️=2000))"  ; 要添加在其他标点符号后的字符串B，注意字符串两边的空格
+C := "((⏱️=4000))"  ; 要添加在句号后的字符串C，注意字符串两边的空格
+
+; 热字串触发
+::cr::
+{
+    ; 保存当前剪贴板内容
+    ClipSaved := ClipboardAll()
+    
+    ; 获取剪贴板文本内容
+    TextContent := A_Clipboard  ; 直接使用 A_Clipboard 而不是 ClipboardAll
+
+    if !TextContent
+    {
+        MsgBox "剪贴板为空或无法访问。"
+        return
+    }
+
+    ; 1. 在句号 (英文和中文) 后添加字符串C
+    ModifiedText := RegExReplace(TextContent, "([.。])", "$1" . C)
+
+    ; 2. 在其他标点符号后添加字符串B
+    ModifiedText := RegExReplace(ModifiedText, "([,，;:?!])", "$1" . B)
+
+    ; 发送修改后的文本
+    SendText(ModifiedText)
+
+    ; 恢复原始剪贴板内容
+    A_Clipboard := ClipSaved
+
+    ; 清空变量，释放内存
+    TextContent := ""
+    ModifiedText := ""
+    ClipSaved := ""
+}
+
+; 功能三：自动化输入
+; 自动填充email
+::email::815141681@qq.com
+::8151::815141681@qq.com
+;任务完成
+::wc::✅
+;待办任务
+::db::⏳
+; 输入 rq 自动生成当天日期（格式：YYYYMMDD）
+::rq::
+{
+    ; 获取当前日期并格式化
+    currentDate := FormatTime(, "yyyyMMdd")
+    
+    ; 发送格式化后的日期
+    SendText(currentDate)
+}
+
+; 退出脚本的热键 (可选)
+^!q::ExitApp()
