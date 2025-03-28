@@ -220,24 +220,44 @@ ExitFunc(ExitReason, ExitCode) {
 ; #z::Run "https://www.autohotkey.com"
 
 ; 功能一：Win+N 处理 Sublime Text
+; 1. 按下 Win+N 键，会尝试查找 Sublime Text 窗口。
+; 2. 如果窗口存在，会尝试激活并恢复窗口。
+; 3. 如果窗口不存在，会尝试在多个可能的路径中运行 Sublime Text。
 #n::
 {
     ; 尝试查找 Sublime Text 窗口
-    ; ahk_class PX_WINDOW_CLASS 是 Sublime Text 的窗口类名
     sublimeWindow := WinExist("ahk_class PX_WINDOW_CLASS")
     
     if sublimeWindow  ; 如果窗口存在
     {
-        ; 如果窗口最小化，恢复窗口
         if WinGetMinMax("ahk_id " sublimeWindow) = -1
             WinRestore("ahk_id " sublimeWindow)
-        
-        ; 激活窗口
         WinActivate("ahk_id " sublimeWindow)
     }
     else  ; 如果窗口不存在，运行新实例
     {
-        Run "C:\Users\Lei\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\sublime_text.lnk"
+        ; 使用环境变量获取开始菜单程序路径
+        startMenuPath := EnvGet("APPDATA") "\Microsoft\Windows\Start Menu\Programs\Sublime Text.lnk"
+        
+        if FileExist(startMenuPath) {
+            Run startMenuPath
+        } else {
+            ; 如果快捷方式不存在，尝试直接运行程序
+            sublimePaths := [
+                A_ProgramFiles "\Sublime Text\sublime_text.exe",
+                A_ProgramFiles "\Sublime Text 3\sublime_text.exe",
+                EnvGet("LOCALAPPDATA") "\Programs\Sublime Text\sublime_text.exe"
+            ]
+            
+            for path in sublimePaths {
+                if FileExist(path) {
+                    Run path
+                    return
+                }
+            }
+            
+            MsgBox("未找到 Sublime Text，请确保已正确安装。", "错误", "48")
+        }
     }
 }
 
