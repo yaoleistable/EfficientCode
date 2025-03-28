@@ -2,7 +2,7 @@
 
 ; 作者：Lei
 ; 日期：2025-03-28
-; 版本：0.2.0
+; 版本：1.0
 ; 功能：AI文本工具一个基于AutoHotkey v2.0和AI服务的文本处理工具，支持文本翻译、润色等功能。
 ; 1. 安装AutoHotkey v2.0。
 ; 2. 将脚本保存为 .ahk 文件。
@@ -14,7 +14,6 @@
 
 #SingleInstance Force
 #Warn
-FileEncoding "UTF-8"  ; 设置文件操作的默认编码为UTF-8
 
 ; 读取配置
 config := IniRead("config.ini", "Hotkey", "translate", "!t")
@@ -116,8 +115,7 @@ ProcessText(function) {
     if (text = "")
         return
 
-    ; 修改为调用Go程序
-    result := RunWait(Format('ai_tool.exe "{}" "{}"', function, text), , "Hide")
+    result := RunWait(Format('python ai_tool.py "{}" "{}"', function, text), , "Hide")
     if FileExist("result.txt") {
         try {
             processed := FileRead("result.txt", "UTF-8")
