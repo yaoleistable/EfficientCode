@@ -15,23 +15,30 @@ InitGui() {
     g_mainGui.SetFont("s10", "Microsoft YaHei")
     g_mainGui.Title := "AI文本工具"
 
-    ; 添加控件
+    ; 创建水平布局
     g_mainGui.Add("Text", , "输入文本:")
-    global g_editSource := g_mainGui.Add("Edit", "vSource w" g_guiWidth " h60")
-    g_mainGui.Add("Text", , "处理结果:")
-    global g_editTarget := g_mainGui.Add("Edit", "vTarget w" g_guiWidth " h60")
+    inputGroup := g_mainGui.Add("GroupBox", "w" g_guiWidth + 5 " h120")
+    global g_editSource := g_mainGui.Add("Edit", "xp+10 yp+20 w" g_guiWidth - 10 " h90")
+    btnCopySource := g_mainGui.Add("Button", "x+5 yp w24 h24", "📋")
+    
+    g_mainGui.Add("Text", "xm", "处理结果:")
+    resultGroup := g_mainGui.Add("GroupBox", "w" g_guiWidth + 5 " h120")
+    global g_editTarget := g_mainGui.Add("Edit", "xp+10 yp+20 w" g_guiWidth - 10 " h90")
+    btnCopyTarget := g_mainGui.Add("Button", "x+5 yp w24 h24", "📋")
 
     ; 添加功能按钮
-    btnTranslate := g_mainGui.Add("Button", "Default", "翻译")
-    btnPolish := g_mainGui.Add("Button", , "润色")
-    btnCopySource := g_mainGui.Add("Button", , "复制输入")
-    btnCopyTarget := g_mainGui.Add("Button", , "复制结果")
+    btnTranslate := g_mainGui.Add("Button", "xm Default", "翻译")
+    btnPolish := g_mainGui.Add("Button", "x+10", "润色")
 
     ; 注册事件
     btnTranslate.OnEvent("Click", (*) => ProcessText("translate"))
     btnPolish.OnEvent("Click", (*) => ProcessText("polish"))
     btnCopySource.OnEvent("Click", CopySource)
     btnCopyTarget.OnEvent("Click", CopyTarget)
+
+    ; 添加复制按钮提示
+    btnCopySource.ToolTip := "复制输入文本"
+    btnCopyTarget.ToolTip := "复制处理结果"
 
     ; 设置窗口关闭事件
     g_mainGui.OnEvent("Close", (*) => g_mainGui.Hide())
