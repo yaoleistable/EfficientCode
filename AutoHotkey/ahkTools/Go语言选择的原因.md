@@ -1,7 +1,5 @@
 ai_tool.go ahkTools.ahk ai_tool 使用go语言、python语言、C#语言哪个语言编写，速度更快，编译大小更小
 
-
-
 让我从几个方面来分析这三种语言在实现 AI 工具时的优劣：
 
 1. 执行速度：
