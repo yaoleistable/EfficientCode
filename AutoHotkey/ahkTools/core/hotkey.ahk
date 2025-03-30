@@ -40,9 +40,9 @@ if (g_translateHotkey || g_polishHotkey) {
             Hotkey g_translateHotkey, (*) => ShowTool("translate")
         if (g_polishHotkey)
             Hotkey g_polishHotkey, (*) => ShowTool("polish")
-    } catch Error as err {
+    } catch Error as hotkeyError {
         MsgBox Format("热键注册失败: {}`n配置的热键: {}, {}",
-            err.Message, g_translateHotkey, g_polishHotkey)
+        hotkeyError.Message, g_translateHotkey, g_polishHotkey)
     }
 } else {
     MsgBox "热键格式无效，请检查配置文件。`n应使用如 !t (Alt+T) 或 ^p (Ctrl+P) 的格式。"

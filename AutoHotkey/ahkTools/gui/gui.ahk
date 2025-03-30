@@ -19,7 +19,7 @@ InitGui() {
     g_mainGui.Add("Text", , "输入文本:")
     inputGroup := g_mainGui.Add("GroupBox", "w" g_guiWidth + 5 " h120")
     global g_editSource := g_mainGui.Add("Edit", "xp+10 yp+20 w" g_guiWidth - 10 " h90")
-    btnCopySource := g_mainGui.Add("Button", "x+5 yp w24 h24", "📋")
+    btnClearSource := g_mainGui.Add("Button", "x+5 yp w24 h24", "🗑️")
     
     g_mainGui.Add("Text", "xm", "处理结果:")
     resultGroup := g_mainGui.Add("GroupBox", "w" g_guiWidth + 5 " h120")
@@ -29,15 +29,17 @@ InitGui() {
     ; 添加功能按钮
     btnTranslate := g_mainGui.Add("Button", "xm Default", "翻译")
     btnPolish := g_mainGui.Add("Button", "x+10", "润色")
+    btnDinox := g_mainGui.Add("Button", "x+10", "Dinox")
 
     ; 注册事件
     btnTranslate.OnEvent("Click", (*) => ProcessText("translate"))
     btnPolish.OnEvent("Click", (*) => ProcessText("polish"))
-    btnCopySource.OnEvent("Click", CopySource)
+    btnDinox.OnEvent("Click", ProcessDinox)
+    btnClearSource.OnEvent("Click", ClearSource)
     btnCopyTarget.OnEvent("Click", CopyTarget)
 
     ; 添加复制按钮提示
-    btnCopySource.ToolTip := "复制输入文本"
+    btnClearSource.ToolTip := "清空输入文本"
     btnCopyTarget.ToolTip := "复制处理结果"
 
     ; 设置窗口关闭事件
@@ -57,7 +59,10 @@ ShowMainWindow(*) {
 CopySource(*) {
     A_Clipboard := g_editSource.Value
 }
-
+; 清空函数
+ClearSource(*) {
+    g_editSource.Value := ""
+}
 CopyTarget(*) {
     A_Clipboard := g_editTarget.Value
 }
