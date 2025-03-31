@@ -13,7 +13,7 @@ global g_guiHeight := 300
 InitConfig() {
     global g_translateHotkey := IniRead(g_configFile, "Hotkey", "translate", "!t")
     global g_polishHotkey := IniRead(g_configFile, "Hotkey", "polish", "!p")
-    global g_dinoxHotkey := IniRead(g_configFile, "Hotkey", "dinoxHotkey", "!d")
+    global g_dinoxHotkey := IniRead(g_configFile, "Hotkey", "dinoxHotkey", "!a")
     global g_guiWidth := IniRead(g_configFile, "GUI", "width", "400")
     global g_guiHeight := IniRead(g_configFile, "GUI", "height", "300")
     

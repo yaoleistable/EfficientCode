@@ -12,7 +12,8 @@ timeout = 30
 # #: 表示字母 Win键
 translate = !t
 polish = !p
-summarize = !s
+summarize = ^!s
+dinoxHotkey = !a
 
 [GUI]
 width = 400
