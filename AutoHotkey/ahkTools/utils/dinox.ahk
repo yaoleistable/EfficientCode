@@ -25,9 +25,10 @@ ProcessDinox(*) {
 
     ; 执行命令并捕获输出
     try {
+        g_editTarget.Value := "正在执行的命令: " command "`n"
         result := RunWait(command, , "Hide")
         if (result = 0) {
-            g_editTarget.Value := "内容已成功发送到 Dinox！"
+            g_editTarget.Value .= "内容已成功发送到 Dinox！"
         } else {
             g_editTarget.Value := "发送失败，请检查配置和网络连接。"
         }
