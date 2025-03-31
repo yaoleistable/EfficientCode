@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -18,19 +17,17 @@ type Config struct {
 }
 
 func getToken() string {
-	// 获取当前文件的路径
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		fmt.Printf("无法获取当前文件路径\n")
+	// 获取可执行文件的路径
+	execPath, err := os.Executable()
+	if err != nil {
+		fmt.Printf("无法获取可执行文件路径: %v\n", err)
 		return ""
 	}
 
-	// 获取 dinox 目录的路径
-	dinoxDir := filepath.Dir(filename)
-	// 获取 DeskAI 目录的路径
-	deskAIDir := filepath.Dir(dinoxDir)
-	// 构建配置文件路径
-	configPath := filepath.Join(deskAIDir, "config.json")
+	// 获取可执行文件所在目录
+	execDir := filepath.Dir(execPath)
+	// 构建配置文件路径（与可执行文件在同一目录）
+	configPath := filepath.Join(execDir, "config.json")
 
 	fmt.Printf("正在读取配置文件: %s\n", configPath)
 
