@@ -56,6 +56,8 @@ C := "((⏱️=4000))"  ; 要添加在句号后的字符串C
 
 ; 处理文本
 ProcessText(function) {
+    ; 清空目标文本框
+    g_editTarget.Value := ""
     text := g_editSource.Value
     if (text = "")
         return

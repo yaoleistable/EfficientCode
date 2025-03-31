@@ -4,6 +4,7 @@
 ; 日期：2025-3-30
 ProcessDinox(*) {
     ; 获取输入文本
+    g_editTarget.Value := ""
     sourceText := g_editSource.Value
     if (sourceText = "") {
         MsgBox("请输入要发送的内容！", "提示", "48")

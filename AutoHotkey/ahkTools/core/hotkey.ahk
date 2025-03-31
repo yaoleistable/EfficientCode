@@ -32,21 +32,24 @@ InitHotkey() {
 ; 使用全局配置变量
 global g_translateHotkey
 global g_polishHotkey
-; 注册热键
-if (g_translateHotkey || g_polishHotkey) {
-    HotIfWinNotActive "AI文本工具"
-    try {
-        if (g_translateHotkey)
-            Hotkey g_translateHotkey, (*) => ShowTool("translate")
-        if (g_polishHotkey)
-            Hotkey g_polishHotkey, (*) => ShowTool("polish")
-    } catch Error as hotkeyError {
-        MsgBox Format("热键注册失败: {}`n配置的热键: {}, {}",
-        hotkeyError.Message, g_translateHotkey, g_polishHotkey)
+global g_dinoxHotkey
+    ; 注册热键
+    if (g_translateHotkey || g_polishHotkey || g_dinoxHotkey) {
+        HotIfWinNotActive "AI文本工具"
+        try {
+            if (g_translateHotkey)
+                Hotkey g_translateHotkey, (*) => ShowTool("translate")
+            if (g_polishHotkey)
+                Hotkey g_polishHotkey, (*) => ShowTool("polish")
+            if (g_dinoxHotkey)
+                Hotkey g_dinoxHotkey, (*) => ShowTool("dinox")
+        } catch Error as hotkeyError {
+            MsgBox Format("热键注册失败: {}`n配置的热键: {}, {}, {}",
+                hotkeyError.Message, g_translateHotkey, g_polishHotkey, g_dinoxHotkey)
+        }
+    } else {
+        MsgBox "热键格式无效，请检查配置文件。`n应使用如 !d (Alt+D) 或 ^d (Ctrl+D) 的格式。"
     }
-} else {
-    MsgBox "热键格式无效，请检查配置文件。`n应使用如 !t (Alt+T) 或 ^p (Ctrl+P) 的格式。"
-}
 }
 
 
@@ -149,7 +152,11 @@ ShowTool(function, *) {
         
         if (success) {
             g_editSource.Value := text
-            ProcessText(function)
+            if (function = "dinox") {
+                ProcessDinox()  ; 直接调用 Dinox 处理函数
+            } else {
+                ProcessText(function)
+            }
         } else {
             errorMsg := "无法获取选中的文本。请确保："
             errorMsg .= "`n1. 已选中要处理的文本"
