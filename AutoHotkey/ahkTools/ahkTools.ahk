@@ -16,6 +16,7 @@ FileEncoding "UTF-8"  ; 设置文件操作的默认编码为UTF-8
 #Include "core\hotkey.ahk"
 #Include "utils\text.ahk"
 #Include "utils\dinox.ahk"
+#Include "core\sublime.ahk"
 
 ; 全局变量
 global g_workingDir := A_ScriptDir
