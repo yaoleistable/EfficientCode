@@ -7,11 +7,17 @@ go get gopkg.in/ini.v1
 go build -o ai_tool.exe ai_tool.go
 # 优化编译文件大小，减小go程序的体积
 go build -ldflags="-s -w" -o ai_tool.exe ai_tool.go 
+
+go build -o deskAI.exe deskAI.go
+go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 ```
 
 
 ### TODO:
 - pdftools合并到deskAI。
+
+### V0.2.10
+- 优化ai_tool.go文件中io处理相关文件。
 
 ### V0.2.9
 - 优化sublime快捷方式的获取方式，在不同电脑都很容易实现打开应用。
