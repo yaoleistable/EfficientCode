@@ -20,6 +20,19 @@ FileEncoding "UTF-8"  ; 设置文件操作的默认编码为UTF-8
 
 ; 全局变量
 global g_workingDir := A_ScriptDir
+global g_debug := true  ; 添加调试开关
+
+; 创建日志目录
+global g_logDir := g_workingDir "\logs"
+if !DirExist(g_logDir)
+    DirCreate(g_logDir)
+
+; 日志函数
+LogDebug(message) {
+    if g_debug {
+        FileAppend FormatTime() ": " message "`n", g_logDir "\debug.log"
+    }
+}
 
 ; 确保配置文件存在
 if !FileExist("config.ini") {

@@ -16,6 +16,10 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 ### TODO:
 - pdftools合并到deskAI。
 
+### V0.2.11
+- 删除ai_tool.go，已在deskAI中实现。
+- 优化程序总体体积。
+
 ### V0.2.10
 - 优化ai_tool.go文件中io处理相关文件。
 

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 func showUsage() {
@@ -20,6 +21,27 @@ func showUsage() {
 	fmt.Println("  help                   - 显示帮助信息")
 }
 
+// 写入结果到文件
+func writeResult(result string) error {
+	// 获取当前执行目录
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("获取当前目录失败: %v", err)
+	}
+
+	// 构建结果文件的完整路径
+	resultPath := filepath.Join(currentDir, "result.txt")
+
+	// 写入结果
+	err = os.WriteFile(resultPath, []byte(result), 0644)
+	if err != nil {
+		return fmt.Errorf("写入结果文件失败: %v", err)
+	}
+
+	fmt.Printf("结果已写入: %s\n", resultPath)
+	return nil
+}
+
 func main() {
 	modelName := flag.String("model", "qwen-plus", "AI模型名称")
 	flag.Parse()
@@ -31,6 +53,8 @@ func main() {
 
 	command := flag.Arg(0)
 	args := flag.Args()[1:]
+	var result string // 将result声明移到这里
+	var err error
 
 	switch command {
 	case "dinoxPost":
@@ -38,7 +62,7 @@ func main() {
 			fmt.Println("使用方法: deskAI.exe dinoxPost \"你要发送的内容\"")
 			return
 		}
-		if err := dinox.DinoxPost(args[0]); err != nil {
+		if postErr := dinox.DinoxPost(args[0]); postErr != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
 
@@ -49,8 +73,6 @@ func main() {
 		}
 
 		text := args[len(args)-1] // 最后一个参数为文本内容
-		var result string
-		var err error
 
 		switch command {
 		case "translate":
@@ -65,6 +87,9 @@ func main() {
 
 		if err != nil {
 			fmt.Printf("执行失败: %v\n", err)
+			if writeErr := writeResult(fmt.Sprintf("错误: %v", err)); writeErr != nil {
+				fmt.Printf("写入错误信息失败: %v\n", writeErr)
+			}
 			os.Exit(1)
 		}
 		fmt.Printf("处理结果:\n%s\n", result)
@@ -75,5 +100,14 @@ func main() {
 	default:
 		fmt.Printf("未知命令: %s\n", command)
 		showUsage()
+	}
+
+	// 写入结果
+	// 仅在有结果时写入文件
+	if result != "" && command != "dinoxPost" && command != "help" {
+		if err := writeResult(result); err != nil {
+			fmt.Printf("写入结果失败: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }

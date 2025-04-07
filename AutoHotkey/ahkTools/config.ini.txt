@@ -1,30 +1,14 @@
-[API]
-base_url = https://dashscope.aliyuncs.com/compatible-mode/v1
-api_key = your api key
-model = qwen-plus
-temperature = 0.5
-timeout = 30
-
-
 [Hotkey]
 # ^: 表示 Ctrl 键
 # !: 表示 Alt 键
 # #: 表示字母 Win键
 translate = !t
 polish = !p
-summarize = ^!s
+summarize = !s
 dinoxHotkey = !a
 
 [GUI]
-width = 400
+width = 500
 height = 300
 font_size = 10
 font_name = Microsoft YaHei
-
-[Functions]
-# 为每个功能定义系统提示词和用户提示词模板
-# {text} 将被替换为实际的输入文本
-# {source_lang} 和 {target_lang} 会被实际的语言替换
-translate = {"system_prompt":"你是一个专业的翻译助手，请将用户提供的文本准确翻译。","user_prompt":"请将以下{source_lang}文本翻译成{target_lang}：\n\n{text}","temperature":0.3,"stream":false}
-polish = {"system_prompt":"你是一个专业的文字润色助手，请改进用户提供的文本，使其更加流畅、专业。","user_prompt":"请润色以下文本，使其更加流畅、专业：\n\n{text}","temperature":0.7,"stream":false}
-summarize = {"system_prompt":"你是一个专业的文本摘要助手，请对用户提供的文本进行简明扼要的总结。","user_prompt":"请对以下文本进行简明扼要的总结：\n\n{text}","temperature":0.5,"stream":false}

@@ -62,15 +62,52 @@ ProcessText(function) {
     if (text = "")
         return
 
-    ; 修改为调用Go程序
-    result := RunWait(Format('ai_tool.exe "{}" "{}"', function, text), , "Hide")
-    if FileExist("result.txt") {
-        try {
-            processed := FileRead("result.txt", "UTF-8")
-            g_editTarget.Value := processed
-        } catch Error as processError {
-            g_editTarget.Value := "处理文本时出错: " processError.Message
+    ; 使用全局工作目录构建正确的路径
+    deskAIPath := g_workingDir "\deskAI\deskAI.exe"
+    
+    ; 记录调试信息
+    LogDebug("执行路径: " deskAIPath)
+    LogDebug("功能: " function)
+    LogDebug("文本: " text)
+    
+    ; 检查文件是否存在
+    if !FileExist(deskAIPath) {
+        LogDebug("错误：deskAI.exe 不存在")
+        g_editTarget.Value := "错误：找不到 deskAI.exe，请确保程序已正确编译"
+        return
+    }
+
+    ; 构建命令行
+    command := Format('"{1}" {2} "{3}"', deskAIPath, function, text)
+    LogDebug("执行命令: " command)
+
+    ; 执行命令并捕获输出
+    try {
+        g_editTarget.Value := "正在处理文本……`n"
+        deskAIDir := g_workingDir "\deskAI"
+        resultFile := deskAIDir "\result.txt"  ; 修改结果文件路径
+
+        result := RunWait(command, deskAIDir, "Hide")
+        LogDebug("执行结果代码: " result)
+        
+        if (result = 0) {
+            LogDebug("结果文件路径: " resultFile)
+            
+            if FileExist(resultFile) {
+                processed := FileRead(resultFile, "UTF-8")
+                g_editTarget.Value := processed
+                FileDelete(resultFile)
+                LogDebug("处理成功")
+            } else {
+                LogDebug("错误：结果文件不存在")
+                g_editTarget.Value := "处理失败：未找到结果文件"
+            }
+        } else {
+            LogDebug("错误：命令执行失败")
+            g_editTarget.Value := "处理失败，请检查配置和网络连接。"
         }
-        FileDelete("result.txt")
+    } catch as processError {
+        LogDebug("错误：" processError.Message)
+        g_editTarget.Value := "错误：" processError.Message
     }
 }
