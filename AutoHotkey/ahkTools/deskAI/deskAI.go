@@ -1,40 +1,73 @@
 package main
 
 import (
+	"deskAI/ai"
 	"deskAI/dinox"
+	"flag"
 	"fmt"
 	"os"
 )
 
 func showUsage() {
 	fmt.Println("使用方法:")
-	fmt.Println("  deskAI.exe dinoxPost \"内容\"  - 发送内容到 DinoAI")
-	fmt.Println("  deskAI.exe pdf ...           - PDF 相关功能（待实现）")
-	fmt.Println("  deskAI.exe help              - 显示帮助信息")
+	fmt.Println("  deskAI.exe [命令] [参数]")
+	fmt.Println("命令列表:")
+	fmt.Println("  dinoxPost \"内容\"       - 发送内容到 DinoAI")
+	fmt.Println("  translate [-model 模型名] \"文本\"  - 执行翻译（中英互译）")
+	fmt.Println("  polish [-model 模型名] \"文本\"     - 执行文本润色")
+	fmt.Println("  summarize [-model 模型名] \"文本\"  - 执行文本总结")
+	fmt.Println("  ask [-model 模型名] \"问题\"        - 向AI助手提问")
+	fmt.Println("  help                   - 显示帮助信息")
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	modelName := flag.String("model", "qwen-plus", "AI模型名称")
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
 		showUsage()
 		return
 	}
 
-	command := os.Args[1]
+	command := flag.Arg(0)
+	args := flag.Args()[1:]
 
 	switch command {
 	case "dinoxPost":
-		if len(os.Args) != 3 {
+		if len(args) != 1 {
 			fmt.Println("使用方法: deskAI.exe dinoxPost \"你要发送的内容\"")
 			return
 		}
-		content := os.Args[2]
-		if err := dinox.DinoxPost(content); err != nil {
+		if err := dinox.DinoxPost(args[0]); err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
 
-	case "pdf":
-		fmt.Println("PDF 功能待实现")
-		// TODO: 实现 PDF 相关功能
+	case "translate", "polish", "summarize", "ask":
+		if len(args) < 1 {
+			fmt.Printf("使用方法: deskAI.exe %s [-model 模型名] \"文本\"\n", command)
+			return
+		}
+
+		text := args[len(args)-1] // 最后一个参数为文本内容
+		var result string
+		var err error
+
+		switch command {
+		case "translate":
+			result, err = ai.TranslateText(*modelName, text)
+		case "polish":
+			result, err = ai.PolishText(*modelName, text)
+		case "summarize":
+			result, err = ai.SummarizeText(*modelName, text)
+		case "ask":
+			result, err = ai.AskAssistant(*modelName, text)
+		}
+
+		if err != nil {
+			fmt.Printf("执行失败: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("处理结果:\n%s\n", result)
 
 	case "help":
 		showUsage()

@@ -78,7 +78,7 @@ ahkTools是一个基于AutoHotkey v2.0、Go语言开发的AI文本处理工具�
    - 选中需要发送的文本
    - 按下Alt+D（或自定义热键）
    - 或打开GUI界面，粘贴文本后点击"Dinox"按钮
-   - 或使用命令行：`deskAI.exe dinoxPost "你的笔记内容"`
+   - 或使用命令行：`.\deskAI.exe dinoxPost "你的笔记内容"`(PowerShell)或`deskAI.exe dinoxPost "你的笔记内容"`
 
 ## 项目结构
 

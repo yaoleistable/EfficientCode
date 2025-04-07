@@ -6,12 +6,12 @@ git clone [your-repository-url]
 cd deskAI
 
 # 初始化模块
-go mod init pdeskAI
+go mod init deskAI
 go mod tidy
 
 # 构建（标准版本）
 go build
-#go build -o deskAI.exe
+go build -o deskAI.exe
 # 构建（优化大小）
 go build -ldflags="-s -w" -o deskAI.exe
 ```
