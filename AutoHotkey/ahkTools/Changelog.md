@@ -15,6 +15,11 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 ### TODO:
 - pdftools合并到deskAI。
+- email等快捷输入，实现从配置文件中读取。
+- 发布分析ahkTools到github。
+
+### V0.2.12
+- 邮箱快捷输入，通过读取config.ini来实现。
 
 ### V0.2.11
 - 删除ai_tool.go，已在deskAI中实现。

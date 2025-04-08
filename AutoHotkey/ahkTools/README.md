@@ -43,7 +43,8 @@ ahkTools是一个基于AutoHotkey v2.0和Go语言开发的AI文本处理工具�
 2. 下载本项目代码
 3. 编译 deskAI 目录下的 Go 程序
 4. 运行`ahkTools.ahk`主程序
-5. 配置`config.ini`中的API设置
+5. 配置`deskAI\config.json`中Dinox Token、AI Token
+6. 配置`config.ini`中的设置
 
 ## 配置说明
 

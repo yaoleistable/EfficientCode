@@ -1,14 +1,26 @@
 #Requires AutoHotkey v2.0
+#Include "..\core\config.ahk"
 
 ; 字符串插入功能的常量定义
 B := "((⏱️=2000))"  ; 要添加在其他标点符号后的字符串B
 C := "((⏱️=4000))"  ; 要添加在句号后的字符串C
 
-; 热字串定义 - 自动化输入
-:C:email::815141681@qq.com
-:C:8151::815141681@qq.com
-:C:qq::815141681@qq.com
+; 从配置文件读取邮箱
+global g_userEmail := IniRead(g_configFile, "User", "email", "")
+
+; 热字串定义 - 自动化输入，快捷输入邮箱
+:C:email::
+{
+    SendText(g_userEmail)
+}
+:C:qq::
+{
+    SendText(g_userEmail)
+}
+
+; 完成
 ::wc::✅
+; 待办
 ::db::⏳
 
 ; 输入 rq 自动生成当天日期（格式：YYYYMMDD）
