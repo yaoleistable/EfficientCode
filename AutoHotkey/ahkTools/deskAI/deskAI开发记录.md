@@ -22,4 +22,11 @@ go build -ldflags="-s -w" -o deskAI.exe
 deskAI.exe dinoxPost "这是一条测试笔记"
 # 查看帮助
 deskAI.exe help
+
+deskAI.exe translate "Hello, how are you?"
+
+deskAI.exe translate -model deepseek/deepseek-chat-v3-0324:free "Hello, how are you?"
+
+deskAI.exe ask "什么是人工智能？"
+
 ```

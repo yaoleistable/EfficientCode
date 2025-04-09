@@ -14,6 +14,9 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 
 ### TODO:
+- 调用github.com/tmc/langchaingo的LLM，实现了调用gemini兼容的API请求
+### V0.2.15
+- 调用github.com/tmc/langchaingo的LLM，实现了调用openai兼容的API请求。
 
 ### V0.2.14
 - 优化了代码结果，便于后续维护。

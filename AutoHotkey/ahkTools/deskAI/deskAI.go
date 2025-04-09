@@ -61,7 +61,13 @@ func handleCommand(command string, args []string, modelName *string) (string, er
 		if len(args) < 1 {
 			return "", fmt.Errorf("使用方法: deskAI.exe %s [-model 模型名] \"文本\"", command)
 		}
-		return ai.HandleCommand(command, *modelName, args[len(args)-1])
+		fmt.Printf("\n处理结果：\n")
+		result, err := ai.HandleCommand(command, *modelName, args[len(args)-1])
+		if err != nil {
+			return "", err
+		}
+		fmt.Println() // 添加一个空行
+		return result, nil
 
 	case "pdfMerge":
 		return pdf.HandleMerge(args)
