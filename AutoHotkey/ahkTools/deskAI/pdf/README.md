@@ -1,6 +1,6 @@
 # PDF工具集
 
-一个简单易用的PDF工具集，支持PDF文件的合并和页面提取功能。
+deskAI/pdf，一个简单易用的PDF工具集，支持PDF文件的合并和页面提取功能。
 
 ## 功能特点
 
@@ -14,118 +14,80 @@
   - 批量处理目录下的PDF文件
   - 灵活的输出目录配置
 
+## 测试说明
+
+```powershell
+# 合并PDF
+.\deskAI.exe pdfMerge -dir "E:\Lei\Downloads\油松01景观图纸\PDF"
+# 拆分PDF
+.\deskAI.exe pdfExtract -input "E:\Lei\Downloads\油松01景观图纸\PDF" -pages 1
+```
+
 ## 安装要求
 
 - Go 1.16+
 - Windows 7/10/11
 - 足够的磁盘空间（建议源文件总大小的2倍）
 
-## 快速开始
+### 一些想法
 
-### 构建程序
+- 可以直接调用pdfcpu.exe命令行工具，更方便的实现PDF文件各种功能。PDFCPU Cli调用函数：https://pkg.go.dev/github.com/pdfcpu/pdfcpu/pkg/cli
+- PDFCPU 调用API：https://pkg.go.dev/github.com/pdfcpu/pdfcpu/pkg/api
+- API实现会更灵活一些，Cli调用会更方便一些。
 
-```bash
-# 克隆项目
-git clone [your-repository-url]
-cd pdftools
+## 小程序开发思路
 
-# 初始化模块
-go mod init pdftools
-go mod tidy
+我想做一个windows 程序，选中文本，按下快捷键，调用open ai兼容的api 自动翻译所选文本（选中文本为汉语时翻译为英语，为英语时翻译为汉语）使用那种语言开发比较好，配置文件通过ui界面写入到配置文件中。快捷键可以自定义设置。ai的prompt需要可以通过ui自定义设置。给出具体代码
 
-# 构建（标准版本）
-go build -o pdftools.exe
+## 桌面AI助手
+写一个基于 WPF 开发的 Windows 桌面应用程序，主要用于文本的 AI 处理，具有以下核心功能：
 
-# 构建（优化大小）
-go build -ldflags="-s -w" -o pdftools.exe
-```
+### 热键功能：
+- 支持自定义全局热键
+- 可以设置多组不同的热键和对应的 AI 处理指令
+- 在任何应用程序中选中文本后，按下设定的热键即可触发处理
 
-### 使用方法
+### 界面设计：
+- 主窗口：显示程序运行状态，提供设置入口
+- 设置窗口：管理热键和 AI 指令的配置界面
+- 处理结果窗口：双列显示原文和处理后的文本
 
-1. **合并PDF文件**
+### 配置管理：
+- 支持 JSON 格式保存配置到独立文件
+- 支持动态加载和保存配置
+- 可以随时添加、修改、删除热键配置
 
-```bash
-# 合并当前目录下的所有PDF
-.\pdftools merge
+### 文本处理：
+- 支持获取当前选中的文本
+- 根据预设的 AI 指令处理文本
+- 在独立窗口中展示处理结果
+- AI指令处理后的文本自动复制到剪切板，用户按下ctrl+v可粘贴AI处理后的文本
 
-# 合并指定目录下的PDF
-.\pdftools merge -dir "D:\文档\待合并"
-```
+### 程序结构：
+- MainWindow：主程序窗口
+- SettingsWindow：配置管理窗口
+- ProcessingWindow：结果显示窗口
+- ConfigurationManager：配置文件管理
+- HotkeyManager：热键注册和处理
+- HotkeySetting：配置数据模型
 
-2. **提取PDF页面**
+### 使用流程：
+- 启动程序后，通过"Settings"菜单配置热键和对应的 AI 处理指令
 
-```bash
-# 从指定目录提取页面
-.\pdftools extract -input "D:\文档\源文件" -output "D:\文档\输出" -pages "1,3-5"
-```
+- 在任何程序中选中要处理的文本
 
-## 使用提示
+- 按下配置好的热键
 
-### 文件命名建议
+- 程序会弹出新窗口，同时显示原文和 AI 处理后的结果
 
-为确保合并顺序正确，建议使用数字前缀：
 
-```
-01-第一章.pdf
-02-第二章.pdf
-03-第三章.pdf
-```
 
-### 注意事项
+### 设计注重：
 
-- 使用前备份重要文件
-- 确保有足够的磁盘空间
-- 检查文件和目录的访问权限
-- 关闭可能占用PDF文件的程序
-
-## 常见问题
-
-### 1. 程序无法运行
-- 以管理员身份运行
-- 检查杀毒软件设置
-- 使用完整路径运行程序
-
-### 2. 找不到PDF文件
-- 确认文件扩展名（.pdf）
-- 检查目录路径
-- 验证文件访问权限
-
-### 3. 合并/提取失败
-- 检查PDF文件完整性
-- 确认目录写入权限
-- 关闭占用PDF的程序
-
-## 项目结构
-
-```
-pdftools/
-├── pdf/
-│   ├── merger.go    # PDF合并功能
-│   └── extractor.go # PDF提取功能
-├── main.go          # 程序入口
-├── go.mod          # 项目依赖
-└── README.md       # 项目文档
-```
-
-## 贡献指南
-
-欢迎提交问题和改进建议！
-
-1. Fork 项目
-2. 创建新分支 (`git checkout -b feature/improvement`)
-3. 提交更改 (`git commit -am '添加新功能'`)
-4. 推送分支 (`git push origin feature/improvement`)
-5. 创建 Pull Request
-
-## 技术支持
-
-如遇问题，请提供：
-
-- 完整的错误信息
-- 操作系统版本
-- 文件目录结构
-- 执行的具体命令
-
-## 许可证
-
-[MIT License](LICENSE)
+- 界面分离：设置界面和结果显示界面相互独立
+- 配置持久化：所有设置保存在配置文件中
+- 扩展性：支持配置多组热键和处理指令
+- 错误处理：用户友好的错误提示
+- 性能优化：处理速度和资源占用
+- 易用性：全局热键支持，无需手动复制粘贴
+- 程序中的 AI 处理部分（ProcessWithAI 方法）需要根据实际需求实现，可以对接不同的 AI 服务（如 OpenAI API 等）来处理文本。
