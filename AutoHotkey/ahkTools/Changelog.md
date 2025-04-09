@@ -15,7 +15,8 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 ### TODO:
 
-
+### V0.2.14
+- 优化了代码结果，便于后续维护。
 ### V0.2.13
 - deskAI增加了PDF提取和合并功能。
 ### V0.2.12

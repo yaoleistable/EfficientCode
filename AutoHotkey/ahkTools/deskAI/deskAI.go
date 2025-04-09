@@ -45,6 +45,39 @@ func writeResult(result string) error {
 	return nil
 }
 
+// 处理命令并返回结果
+func handleCommand(command string, args []string, modelName *string) (string, error) {
+	switch command {
+	case "dinoxPost":
+		if len(args) != 1 {
+			return "", fmt.Errorf("使用方法: deskAI.exe dinoxPost \"你要发送的内容\"")
+		}
+		if err := dinox.DinoxPost(args[0]); err != nil {
+			return "", err
+		}
+		return "", nil
+
+	case "translate", "polish", "summarize", "ask":
+		if len(args) < 1 {
+			return "", fmt.Errorf("使用方法: deskAI.exe %s [-model 模型名] \"文本\"", command)
+		}
+		return ai.HandleCommand(command, *modelName, args[len(args)-1])
+
+	case "pdfMerge":
+		return pdf.HandleMerge(args)
+
+	case "pdfExtract":
+		return pdf.HandleExtract(args)
+
+	case "help":
+		showUsage()
+		return "", nil
+
+	default:
+		return "", fmt.Errorf("未知命令: %s", command)
+	}
+}
+
 func main() {
 	modelName := flag.String("model", "qwen-plus", "AI模型名称")
 	flag.Parse()
@@ -56,95 +89,19 @@ func main() {
 
 	command := flag.Arg(0)
 	args := flag.Args()[1:]
-	var result string // 将result声明移到这里
-	var err error
 
-	switch command {
-	case "dinoxPost":
-		if len(args) != 1 {
-			fmt.Println("使用方法: deskAI.exe dinoxPost \"你要发送的内容\"")
-			return
-		}
-		if postErr := dinox.DinoxPost(args[0]); postErr != nil {
-			fmt.Printf("Error: %v\n", err)
-		}
-
-	case "translate", "polish", "summarize", "ask":
-		if len(args) < 1 {
-			fmt.Printf("使用方法: deskAI.exe %s [-model 模型名] \"文本\"\n", command)
-			return
-		}
-
-		text := args[len(args)-1]
-		switch command {
-		case "translate":
-			result, err = ai.TranslateText(*modelName, text)
-		case "polish":
-			result, err = ai.PolishText(*modelName, text)
-		case "summarize":
-			result, err = ai.SummarizeText(*modelName, text)
-		case "ask":
-			result, err = ai.AskAssistant(*modelName, text)
-		}
-
-	case "pdfMerge":
-		// 解析PDF合并命令的参数
-		pdfMergeCmd := flag.NewFlagSet("pdfMerge", flag.ExitOnError)
-		mergeDirPath := pdfMergeCmd.String("dir", "", "要合并的PDF文件所在目录路径")
-		pdfMergeCmd.Parse(args)
-
-		if *mergeDirPath == "" {
-			fmt.Println("使用方法: deskAI.exe pdfMerge -dir 目录路径")
-			return
-		}
-
-		if err := pdf.MergePDFs(*mergeDirPath); err != nil {
-			fmt.Printf("PDF合并失败: %v\n", err)
+	result, err := handleCommand(command, args, modelName)
+	if err != nil {
+		fmt.Printf("错误: %v\n", err)
+		if result != "" {
 			if writeErr := writeResult(fmt.Sprintf("错误: %v", err)); writeErr != nil {
 				fmt.Printf("写入错误信息失败: %v\n", writeErr)
 			}
-			os.Exit(1)
 		}
-		fmt.Println("PDF合并完成")
-		result = "PDF合并完成"
-
-	case "pdfExtract":
-		// 解析PDF提取命令的参数
-		pdfExtractCmd := flag.NewFlagSet("pdfExtract", flag.ExitOnError)
-		extractInputDir := pdfExtractCmd.String("input", "", "输入目录路径")
-		extractOutputDir := pdfExtractCmd.String("output", "", "输出目录路径")
-		extractPageRange := pdfExtractCmd.String("pages", "", "页码范围，如：1,3-5")
-		pdfExtractCmd.Parse(args)
-
-		if *extractInputDir == "" || *extractPageRange == "" {
-			fmt.Println("使用方法: deskAI.exe pdfExtract -input 输入目录 [-output 输出目录] -pages 页码范围")
-			return
-		}
-
-		outputDir := *extractOutputDir
-		if outputDir == "" {
-			outputDir = filepath.Join(*extractInputDir, "output")
-		}
-
-		if err := pdf.ExtractPDFPages(*extractInputDir, outputDir, *extractPageRange); err != nil {
-			fmt.Printf("PDF页面提取失败: %v\n", err)
-			if writeErr := writeResult(fmt.Sprintf("错误: %v", err)); writeErr != nil {
-				fmt.Printf("写入错误信息失败: %v\n", writeErr)
-			}
-			os.Exit(1)
-		}
-		result = "PDF页面提取完成"
-
-	case "help":
-		showUsage()
-
-	default:
-		fmt.Printf("未知命令: %s\n", command)
-		showUsage()
+		os.Exit(1)
 	}
 
 	// 写入结果
-	// 仅在有结果时写入文件
 	if result != "" && command != "dinoxPost" && command != "help" {
 		if err := writeResult(result); err != nil {
 			fmt.Printf("写入结果失败: %v\n", err)
