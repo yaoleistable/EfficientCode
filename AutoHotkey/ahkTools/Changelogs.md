@@ -17,7 +17,10 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 ### V0.2.16
 - 配置文件中增加默认模型设置，方便用户选用不同的AI模型。
-
+- 修改 createLLM 函数返回类型为 llms.Model
+- 删除 result.txt 文件并优化结果输出逻辑
+- 添加 UTF-8 编码设置和日志记录功能
+- 优化 ProcessText 函数，简化命令执行和输出处理
 ### V0.2.15
 - 调用github.com/tmc/langchaingo的LLM，实现了调用openai兼容的API请求。
 - AI回答命令行中年可以流式输出。
