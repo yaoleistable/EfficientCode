@@ -20,7 +20,8 @@ FileEncoding "UTF-8"  ; 设置文件操作的默认编码为UTF-8
 
 ; 全局变量
 global g_workingDir := A_ScriptDir
-global g_debug := true  ; 添加调试开关
+global g_debug := true
+global g_codePage := "CP65001"  ; 添加 UTF-8 编码页设置
 
 ; 创建日志目录
 global g_logDir := g_workingDir "\logs"
@@ -42,6 +43,9 @@ if !FileExist("config.ini") {
 
 ; 初始化应用程序
 try {
+    ; 设置控制台输出编码为 UTF-8
+    DllCall("SetConsoleOutputCP", "Int", 65001)
+    
     InitConfig()
     InitGui()
     InitTray()

@@ -58,7 +58,7 @@ func AskAI(modelName, prompt, question string) (string, error) {
 }
 
 // createLLM 根据配置创建 LLM 实例
-func createLLM(config *AIConfig) (llms.LLM, error) {
+func createLLM(config *AIConfig) (llms.Model, error) {
 	return openai.New(
 		openai.WithToken(config.Token),
 		openai.WithModel(config.Model),

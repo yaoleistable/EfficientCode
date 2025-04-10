@@ -74,52 +74,36 @@ ProcessText(function) {
     if (text = "")
         return
 
-    ; 使用全局工作目录构建正确的路径
     deskAIPath := g_workingDir "\deskAI\deskAI.exe"
     
-    ; 记录调试信息
-    LogDebug("执行路径: " deskAIPath)
-    LogDebug("功能: " function)
-    LogDebug("文本: " text)
-    
-    ; 检查文件是否存在
     if !FileExist(deskAIPath) {
-        LogDebug("错误：deskAI.exe 不存在")
         g_editTarget.Value := "错误：找不到 deskAI.exe，请确保程序已正确编译"
         return
     }
 
-    ; 构建命令行
-    command := Format('"{1}" {2} "{3}"', deskAIPath, function, text)
-    LogDebug("执行命令: " command)
-
-    ; 执行命令并捕获输出
     try {
-        g_editTarget.Value := "正在处理文本……`n"
-        deskAIDir := g_workingDir "\deskAI"
-        resultFile := deskAIDir "\result.txt"  ; 修改结果文件路径
-
-        result := RunWait(command, deskAIDir, "Hide")
-        LogDebug("执行结果代码: " result)
+        ; 设置命令
+        cmd := Format('"{1}" {2} "{3}"', deskAIPath, function, text)
         
-        if (result = 0) {
-            LogDebug("结果文件路径: " resultFile)
-            
-            if FileExist(resultFile) {
-                processed := FileRead(resultFile, "UTF-8")
-                g_editTarget.Value := processed
-                FileDelete(resultFile)
-                LogDebug("处理成功")
-            } else {
-                LogDebug("错误：结果文件不存在")
-                g_editTarget.Value := "处理失败：未找到结果文件"
-            }
+        g_editTarget.Value := "正在处理文本...`n"
+        
+        ; 创建临时管道文件
+        tempFile := A_Temp "\ahk_output.txt"
+        
+        ; 使用 Run 执行命令并重定向输出
+        RunWait(A_ComSpec ' /c chcp 65001 >nul && ' cmd ' > "' tempFile '"',, "Hide")
+        
+        ; 读取输出文件
+        if FileExist(tempFile) {
+            output := FileRead(tempFile, "UTF-8")
+            g_editTarget.Value := output
+            FileDelete(tempFile)
         } else {
-            LogDebug("错误：命令执行失败")
-            g_editTarget.Value := "处理失败，请检查配置和网络连接。"
+            g_editTarget.Value := "处理完成，但无输出结果"
         }
-    } catch as processError {
-        LogDebug("错误：" processError.Message)
-        g_editTarget.Value := "错误：" processError.Message
+        
+    } catch as err {
+        g_editTarget.Value := "执行错误: " err.Message
+        LogDebug("执行错误: " err.Message)
     }
 }

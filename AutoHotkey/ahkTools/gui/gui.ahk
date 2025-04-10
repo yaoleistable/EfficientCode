@@ -23,7 +23,7 @@ InitGui() {
     
     g_mainGui.Add("Text", "xm", "处理结果:")
     resultGroup := g_mainGui.Add("GroupBox", "w" g_guiWidth + 5 " h120")
-    global g_editTarget := g_mainGui.Add("Edit", "xp+10 yp+20 w" g_guiWidth - 10 " h90")
+    global g_editTarget := g_mainGui.Add("Edit", "xp+10 yp+20 w" g_guiWidth - 10 " h90 ReadOnly VScroll")
     btnCopyTarget := g_mainGui.Add("Button", "x+5 yp w24 h24", "📋")
 
     ; 添加功能按钮

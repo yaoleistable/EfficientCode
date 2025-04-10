@@ -22,33 +22,32 @@ type Config struct {
 
 // LoadConfig 从config.json文件中读取AI配置
 func LoadConfig() (*Config, error) {
-	// 获取可执行文件的路径
 	execPath, err := os.Executable()
 	if err != nil {
+		LogError("获取可执行文件路径失败: %v", err)
 		return nil, fmt.Errorf("获取可执行文件路径失败: %v", err)
 	}
 
-	// 获取可执行文件所在目录
 	execDir := filepath.Dir(execPath)
-	// 构建配置文件路径（与可执行文件在同一目录）
 	configPath := filepath.Join(execDir, "config.json")
 
-	fmt.Printf("正在读取配置文件: %s\n", configPath)
+	// 将输出改为日志记录
+	LogInfo("正在读取配置文件: %s", configPath)
 
-	// 读取配置文件
 	data, err := os.ReadFile(configPath)
 	if err != nil {
+		LogError("读取配置文件失败: %v", err)
 		return nil, fmt.Errorf("读取配置文件失败: %v", err)
 	}
 
-	// 解析JSON数据
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
+		LogError("解析配置文件失败: %v", err)
 		return nil, fmt.Errorf("解析配置文件失败: %v", err)
 	}
 
-	// 验证配置
 	if len(config.Models) == 0 {
+		LogError("配置文件中没有找到任何AI模型配置")
 		return nil, fmt.Errorf("配置文件中没有找到任何AI模型配置")
 	}
 

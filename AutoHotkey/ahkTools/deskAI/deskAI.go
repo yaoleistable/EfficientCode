@@ -62,13 +62,14 @@ func handleCommand(command string, args []string, modelName *string) (string, er
 		if len(args) < 1 {
 			return "", fmt.Errorf("使用方法: deskAI.exe %s [-model 模型名] \"文本\"", command)
 		}
-		fmt.Printf("\n处理结果：\n")
-		result, err := ai.HandleCommand(command, *modelName, args[len(args)-1])
+		_, err := ai.HandleCommand(command, *modelName, args[len(args)-1])
 		if err != nil {
 			return "", err
 		}
-		fmt.Println() // 添加一个空行
-		return result, nil
+		// 直接输出到标准输出
+		//fmt.Print(result)
+		//os.Stdout.Sync()
+		return "", nil
 
 	case "pdfMerge":
 		return pdf.HandleMerge(args)
@@ -120,22 +121,9 @@ func main() {
 	command := flag.Arg(0)
 	args := flag.Args()[1:]
 
-	result, err := handleCommand(command, args, modelName)
+	_, err := handleCommand(command, args, modelName)
 	if err != nil {
 		fmt.Printf("错误: %v\n", err)
-		if result != "" {
-			if writeErr := writeResult(fmt.Sprintf("错误: %v", err)); writeErr != nil {
-				fmt.Printf("写入错误信息失败: %v\n", writeErr)
-			}
-		}
 		os.Exit(1)
-	}
-
-	// 写入结果
-	if result != "" && command != "dinoxPost" && command != "help" {
-		if err := writeResult(result); err != nil {
-			fmt.Printf("写入结果失败: %v\n", err)
-			os.Exit(1)
-		}
 	}
 }
