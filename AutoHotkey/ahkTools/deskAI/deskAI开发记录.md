@@ -12,8 +12,10 @@ go mod tidy
 # 构建（标准版本）
 go build
 go build -o deskAI.exe
-# 构建（优化大小）
+# 构建（优化大小） ，推荐
 go build -ldflags="-s -w" -o deskAI.exe
+# 终极优化包大小,不推荐，速度慢，减少幅度有限
+go build -trimpath -ldflags="-s -w" deskAI.go
 ```
 
 ## 2. 使用方法
