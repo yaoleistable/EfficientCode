@@ -14,10 +14,13 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 
 ### TODO:
-- 调用github.com/tmc/langchaingo的LLM，实现了调用gemini兼容的API请求
+
+### V0.2.16
+- 配置文件中增加默认模型设置，方便用户选用不同的AI模型。
+
 ### V0.2.15
 - 调用github.com/tmc/langchaingo的LLM，实现了调用openai兼容的API请求。
-
+- AI回答命令行中年可以流式输出。
 ### V0.2.14
 - 优化了代码结果，便于后续维护。
 ### V0.2.13

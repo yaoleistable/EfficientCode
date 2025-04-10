@@ -4,6 +4,7 @@ import (
 	"deskAI/ai"
 	"deskAI/dinox"
 	"deskAI/pdf"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -84,8 +85,31 @@ func handleCommand(command string, args []string, modelName *string) (string, er
 	}
 }
 
+// 获取默认模型名称
+func getDefaultModel() string {
+	configFile := "config.json"
+	data, err := os.ReadFile(configFile)
+	if err != nil {
+		return "qwen-plus"
+	}
+
+	var config struct {
+		DefaultModel string `json:"default_model"`
+	}
+
+	if err := json.Unmarshal(data, &config); err != nil {
+		return "qwen-plus"
+	}
+
+	if config.DefaultModel == "" {
+		return "qwen-plus"
+	}
+	return config.DefaultModel
+}
+
 func main() {
-	modelName := flag.String("model", "qwen-plus", "AI模型名称")
+	defaultModel := getDefaultModel()
+	modelName := flag.String("model", defaultModel, "AI模型名称")
 	flag.Parse()
 
 	if len(flag.Args()) < 1 {
