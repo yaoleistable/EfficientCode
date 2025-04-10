@@ -280,3 +280,5 @@ go.work.sum
 # env file
 .env
 config.json
+result.txt
+
