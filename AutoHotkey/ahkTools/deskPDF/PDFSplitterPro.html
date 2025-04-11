@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Splitter Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .dropzone {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .dropzone.active {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+        .file-item:hover .file-remove {
+            opacity: 1;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+        .page-range-input {
+            width: 60px;
+            text-align: center;
+        }
+        .toast {
+            position: relative;
+            display: inline-block;  /* 添加这行 */
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 999;  /* 提高层级 */
+            bottom: 150%;  /* 调整位置，远离触发元素 */
+            right: -150px;  /* 向右偏移，使提示框居中 */
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: normal;
+            line-height: 1.4;
+            font-size: 0.875rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* 添加阴影 */
+        }
+        
+        /* 添加小箭头 */
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">PDF 分割工具</h1>
+            <p class="text-gray-600">从多个 PDF 文件中灵活提取指定页面</p>
+        </header>
+
+        <main>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- Upload Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <div 
+                        id="dropzone" 
+                        class="dropzone rounded-lg p-8 text-center cursor-pointer"
+                        ondragover="event.preventDefault(); this.classList.add('active')"
+                        ondragleave="this.classList.remove('active')"
+                        ondrop="handleDrop(event)"
+                    >
+                        <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-pdf text-blue-500 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2">拖放 PDF 文件到此处</h3>
+                        <p class="text-gray-500 mb-4">或</p>
+                        <label class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer">
+                            <i class="fas fa-upload mr-2"></i>
+                            选择文件
+                            <input id="file-input" type="file" class="hidden" accept=".pdf" multiple onchange="handleFileSelect(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- File List Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-700">已选择文件</h3>
+                        <div class="text-sm text-gray-500">
+                            已选择 <span id="file-count">0</span> 个文件
+                        </div>
+                    </div>
+
+                    <div id="file-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-400" id="empty-state">
+                            <i class="fas fa-folder-open text-3xl mb-2"></i>
+                            <p>暂未选择文件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options Section -->
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">提取选项</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">页面范围</label>
+                            <div class="flex items-center space-x-2">
+                                <select id="range-type" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onchange="toggleRangeOptions()">
+                                    <option value="single">单页</option>
+                                    <option value="range">页面范围</option>                                                           
+                                    <option value="custom">自定义选择</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="single-page-container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">页码</label>
+                            <input type="number" id="single-page" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        
+                        <div id="page-range-container" class="hidden md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">从 - 到</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">自定义页码（用逗号分隔）</label>
+                            <div class="tooltip-text">示例：5（单页）, 1-3（范围）, 2,5,7-9（组合）</div>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="page-from" min="1" class="page-range-input px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <span>to</span>
+                                <input type="number" id="page-to" min="1" class="page-range-input px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="custom-pages-container" class="hidden mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">页码</label>
+                        <div class="relative">
+                            <input type="text" id="custom-pages" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. 1,3,5-8,10">
+                            <div class="tooltip absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <i class="fas fa-info-circle text-gray-400 hover:text-blue-500 cursor-pointer"></i>
+                                <span class="tooltip-text">示例：5（单页）, 1-3（页面范围）, 2,5,7-9（自定义选择）</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">输出文件名格式</label>
+                            <div class="relative">
+                                <input type="text" id="output-pattern" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="{filename}-extracted-{pages}.pdf">
+                                <div class="tooltip absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <i class="fas fa-info-circle text-gray-400 hover:text-blue-500 cursor-pointer"></i>
+                                    <span class="tooltip-text">Available variables: {filename}, {pages}, {date}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">输出目录</label>
+                            <div class="flex">
+                                <input type="text" id="output-dir" class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="不填写，默认保存到“下载”文件夹">
+                                <button 
+                                    id="dir-btn"
+                                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 transition-colors"
+                                    onclick="selectOutputDirectory()"
+                                    title="Select output directory (browser may prompt for permission)"
+                                >
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                            <p id="dir-warning" class="text-xs text-yellow-600 mt-1 hidden">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> 目录选择功能可能在某些浏览器中不可用。文件将正常下载。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex items-center">
+                        <input type="checkbox" id="remove-metadata" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="remove-metadata" class="ml-2 block text-sm text-gray-700">移除元数据（作者、创建者等）
+                    </div>
+                </div>
+
+                <!-- Action Section -->
+                <div class="p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button 
+                            id="clear-btn" 
+                            class="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            disabled
+                            onclick="clearFiles()"
+                        >
+                            <i class="fas fa-trash-alt mr-2"></i> 清除全部
+                        </button>
+                        
+                        <div class="w-full sm:w-auto flex-1 max-w-md">
+                            <div class="hidden mb-2 text-sm text-gray-500 flex justify-between" id="progress-text">
+                                <span>处理中...</span>
+                                <span id="progress-percent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 hidden" id="progress-container">
+                                <div id="progress-bar" class="progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            id="extract-btn" 
+                            class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                            disabled
+                            onclick="extractPages()"
+                        >
+                            <span id="extract-text">提取页面</span>
+                            <i id="extract-spinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions Section -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">如何使用 PDF 分割工具</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-upload text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">上传 PDF</h4>
+                            <p class="text-sm text-gray-600">选择或拖放 PDF 文件到上传区域</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-sliders-h text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">设置提取规则</h4>
+                            <p class="text-sm text-gray-600">选择页面范围、输出命名和目录选项</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-file-export text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">提取并保存</h4>
+                            <p class="text-sm text-gray-600">点击"提取页面"获取所选页面</p>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>PDF 分割工具 - 纯浏览器端 PDF 提取工具，文件不会上传到服务器</p>
+            <p class="mt-1">用 <i class="fas fa-heart text-red-400"></i> 为PDF爱好者打造</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        // Global variables
+        let pdfFiles = [];
+        let fileNames = [];
+        let currentDirHandle = null;
+        
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const emptyState = document.getElementById('empty-state');
+        const fileCount = document.getElementById('file-count');
+        const clearBtn = document.getElementById('clear-btn');
+        const extractBtn = document.getElementById('extract-btn');
+        const rangeType = document.getElementById('range-type');
+        const singlePageContainer = document.getElementById('single-page-container');
+        const pageRangeContainer = document.getElementById('page-range-container');
+        const customPagesContainer = document.getElementById('custom-pages-container');
+        const singlePageInput = document.getElementById('single-page');
+        const pageFromInput = document.getElementById('page-from');
+        const pageToInput = document.getElementById('page-to');
+        const customPagesInput = document.getElementById('custom-pages');
+        const outputPattern = document.getElementById('output-pattern');
+        const outputDir = document.getElementById('output-dir');
+        const dirBtn = document.getElementById('dir-btn');
+        const dirWarning = document.getElementById('dir-warning');
+        const progressText = document.getElementById('progress-text');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const extractText = document.getElementById('extract-text');
+        const extractSpinner = document.getElementById('extract-spinner');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Check if File System Access API is available
+        const isFileSystemAccessAvailable = 'showDirectoryPicker' in window;
+        if (!isFileSystemAccessAvailable) {
+            dirWarning.classList.remove('hidden');
+            dirBtn.title = "Directory selection not supported in this browser. Files will download normally.";
+        }
+
+        // Handle file selection via input
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Handle file drop
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('active');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Process selected files
+        function processFiles(files) {
+            let validFiles = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check if file is PDF
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    // Check for duplicate files
+                    if (!fileNames.includes(file.name)) {
+                        pdfFiles.push(file);
+                        fileNames.push(file.name);
+                        validFiles++;
+                        
+                        // Add to UI
+                        addFileToList(file);
+                    }
+                }
+            }
+            
+            // Update UI
+            updateUIState();
+            
+            // Show notification if some files were skipped
+            if (validFiles < files.length) {
+                showNotification(`Added ${validFiles} PDF file(s). Non-PDF files were skipped.`, 'info');
+            }
+            
+            // Reset file input to allow selecting same files again
+            fileInput.value = '';
+        }
+
+        // Add file to the UI list
+        function addFileToList(file) {
+            // Hide empty state if this is the first file
+            if (pdfFiles.length === 1) {
+                emptyState.classList.add('hidden');
+            }
+            
+            const fileSize = formatFileSize(file.size);
+            const fileId = 'file-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            
+            const fileItem = document.createElement('div');
+            fileItem.id = fileId;
+            fileItem.className = 'file-item group flex items-center justify-between bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors';
+            fileItem.dataset.filename = file.name;
+            
+            fileItem.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center mr-3">
+                        <i class="fas fa-file-pdf text-red-500"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 truncate max-w-xs">${file.name}</div>
+                        <div class="text-xs text-gray-500">${fileSize}</div>
+                    </div>
+                </div>
+                <button 
+                    class="file-remove opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    onclick="removeFile('${fileId}')"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            fileList.appendChild(fileItem);
+        }
+
+        // Remove file from list
+        function removeFile(fileId) {
+            const fileItem = document.getElementById(fileId);
+            if (fileItem) {
+                const filename = fileItem.dataset.filename;
+                const index = fileNames.indexOf(filename);
+                
+                if (index !== -1) {
+                    pdfFiles.splice(index, 1);
+                    fileNames.splice(index, 1);
+                    fileItem.remove();
+                    
+                    // Show empty state if no files left
+                    if (pdfFiles.length === 0) {
+                        emptyState.classList.remove('hidden');
+                    }
+                    
+                    updateUIState();
+                }
+            }
+        }
+
+        // Clear all files
+        function clearFiles() {
+            pdfFiles = [];
+            fileNames = [];
+            fileList.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            updateUIState();
+            showNotification('All files have been removed', 'info');
+        }
+
+        // Update UI state based on files
+        function updateUIState() {
+            fileCount.textContent = pdfFiles.length;
+            
+            // Enable/disable buttons
+            clearBtn.disabled = pdfFiles.length === 0;
+            extractBtn.disabled = pdfFiles.length === 0;
+            
+            // Set default output pattern if empty
+            if (pdfFiles.length > 0 && !outputPattern.value) {
+                outputPattern.value = '{filename}-extracted-{pages}.pdf';
+            }
+        }
+
+        // Toggle range options based on selection
+        function toggleRangeOptions() {
+            const value = rangeType.value;
+            
+            // Hide all containers first
+            singlePageContainer.classList.add('hidden');
+            pageRangeContainer.classList.add('hidden');
+            customPagesContainer.classList.add('hidden');
+            
+            // Show the selected one
+            if (value === 'single') {
+                singlePageContainer.classList.remove('hidden');
+            } else if (value === 'range') {
+                pageRangeContainer.classList.remove('hidden');
+            } else if (value === 'custom') {
+                customPagesContainer.classList.remove('hidden');
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const colors = {
+                success: 'bg-green-100 text-green-800 border-green-200',
+                error: 'bg-red-100 text-red-800 border-red-200',
+                info: 'bg-blue-100 text-blue-800 border-blue-200',
+                warning: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast px-4 py-3 rounded-md shadow-md border ${colors[type]} flex items-start max-w-xs`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]} mt-1 mr-2"></i>
+                <span>${message}</span>
+                <button class="ml-2 text-gray-500 hover:text-gray-700" onclick="this.parentElement.classList.add('hide'); setTimeout(() => this.parentElement.remove(), 300)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Parse page range string into array of page numbers
+        function parsePageRange(rangeStr, totalPages) {
+            if (!rangeStr) return [];
+            
+            const parts = rangeStr.split(',');
+            const pages = [];
+            
+            for (const part of parts) {
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(Number);
+                    const actualStart = Math.max(1, start);
+                    const actualEnd = Math.min(totalPages, end || start);
+                    
+                    for (let i = actualStart; i <= actualEnd; i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                    }
+                } else {
+                    const page = parseInt(part);
+                    if (!isNaN(page) && page >= 1 && page <= totalPages && !pages.includes(page)) {
+                        pages.push(page);
+                    }
+                }
+            }
+            
+            return pages.sort((a, b) => a - b);
+        }
+
+        // Get selected pages based on current options
+        async function getSelectedPages(pdfDoc) {
+            const totalPages = pdfDoc.getPageCount();
+            const rangeTypeValue = rangeType.value;
+            
+            if (rangeTypeValue === 'all') {
+                return Array.from({ length: totalPages }, (_, i) => i + 1);
+            } else if (rangeTypeValue === 'single') {
+                const page = parseInt(singlePageInput.value);
+                return page >= 1 && page <= totalPages ? [page] : [];
+            } else if (rangeTypeValue === 'range') {
+                const from = parseInt(pageFromInput.value) || 1;
+                const to = parseInt(pageToInput.value) || totalPages;
+                const start = Math.max(1, Math.min(from, totalPages));
+                const end = Math.max(start, Math.min(to, totalPages));
+                return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+            } else if (rangeTypeValue === 'custom') {
+                return parsePageRange(customPagesInput.value, totalPages);
+            }
+            
+            return [];
+        }
+
+        // Generate output filename
+        function generateOutputFilename(originalName, pages) {
+            let filename = outputPattern.value || '{filename}-extracted-{pages}.pdf';
+            
+            // Replace placeholders
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            
+            // Get base filename without extension
+            const baseName = originalName.replace(/\.pdf$/i, '');
+            
+            // Format pages string
+            let pagesStr = '';
+            if (pages.length > 0) {
+                // Try to condense sequential pages (e.g., 1,2,3,4 -> 1-4)
+                const condensed = [];
+                let start = pages[0];
+                let prev = pages[0];
+                
+                for (let i = 1; i < pages.length; i++) {
+                    if (pages[i] === prev + 1) {
+                        prev = pages[i];
+                    } else {
+                        condensed.push(start === prev ? start : `${start}-${prev}`);
+                        start = pages[i];
+                        prev = pages[i];
+                    }
+                }
+                condensed.push(start === prev ? start : `${start}-${prev}`);
+                pagesStr = condensed.join(',');
+            }
+            
+            filename = filename
+                .replace(/{filename}/g, baseName)
+                .replace(/{pages}/g, pagesStr)
+                .replace(/{date}/g, dateStr);
+            
+            // Ensure it ends with .pdf
+            if (!filename.toLowerCase().endsWith('.pdf')) {
+                filename += '.pdf';
+            }
+            
+            return filename;
+        }
+
+        // Select output directory (using the File System Access API if available)
+        async function selectOutputDirectory() {
+            if (!isFileSystemAccessAvailable) {
+                showNotification('Directory selection is not supported in this browser. Files will download normally.', 'warning');
+                return;
+            }
+            
+            try {
+                // Check if we're in a secure context
+                if (!window.isSecureContext) {
+                    showNotification('Directory selection requires a secure (HTTPS) connection', 'error');
+                    return;
+                }
+                
+                const dirHandle = await window.showDirectoryPicker({
+                    mode: 'readwrite',
+                    startIn: 'downloads'
+                });
+                
+                // Verify permission
+                if (await dirHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') {
+                    const permission = await dirHandle.requestPermission({ mode: 'readwrite' });
+                    if (permission !== 'granted') {
+                        showNotification('Permission to access directory was denied', 'error');
+                        return;
+                    }
+                }
+                
+                // 存储目录句柄供后续使用
+                currentDirHandle = dirHandle;
+                outputDir.value = dirHandle.name;
+                showNotification(`Output directory set to "${dirHandle.name}"`, 'success');
+                
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Directory selection error:', error);
+                    showNotification('Error selecting directory: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Extract pages from PDFs
+        async function extractPages() {
+            if (pdfFiles.length === 0) {
+                showNotification('Please select at least one PDF file', 'error');
+                return;
+            }
+            
+            // Validate page selection
+            if (rangeType.value === 'single' && !singlePageInput.value) {
+                showNotification('Please enter a page number', 'error');
+                return;
+            }
+            
+            if (rangeType.value === 'range' && (!pageFromInput.value || !pageToInput.value)) {
+                showNotification('Please enter both start and end page numbers', 'error');
+                return;
+            }
+            
+            if (rangeType.value === 'custom' && !customPagesInput.value) {
+                showNotification('Please enter custom page numbers', 'error');
+                return;
+            }
+            
+            // Show loading state
+            extractBtn.disabled = true;
+            extractText.textContent = 'Extracting...';
+            extractSpinner.classList.remove('hidden');
+            progressText.classList.remove('hidden');
+            progressContainer.classList.remove('hidden');
+            
+            try {
+                const { PDFDocument } = PDFLib;
+                let processedFiles = 0;
+                const totalFiles = pdfFiles.length;
+                
+                for (const file of pdfFiles) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    const totalPages = pdfDoc.getPageCount();
+                    
+                    // Get selected pages
+                    const selectedPages = await getSelectedPages(pdfDoc);
+                    if (selectedPages.length === 0) {
+                        showNotification(`No valid pages selected in ${file.name}`, 'error');
+                        processedFiles++;
+                        updateProgress(processedFiles, totalFiles);
+                        continue;
+                    }
+                    
+                    // Create new PDF with selected pages
+                    const newPdf = await PDFDocument.create();
+                    
+                    // Set metadata
+                    if (document.getElementById('remove-metadata').checked) {
+                        newPdf.setTitle('Extracted Pages');
+                        newPdf.setAuthor('');
+                        newPdf.setSubject('');
+                        newPdf.setKeywords([]);
+                        newPdf.setProducer('');
+                        newPdf.setCreator('');
+                    } else {
+                        // Copy metadata from original
+                        const originalTitle = pdfDoc.getTitle();
+                        newPdf.setTitle(originalTitle ? `${originalTitle} (extracted)` : 'Extracted Pages');
+                        newPdf.setAuthor(pdfDoc.getAuthor() || '');
+                    }
+                    
+                    // Copy selected pages
+                    const pageIndices = selectedPages.map(p => p - 1); // Convert to 0-based
+                    const pages = await newPdf.copyPages(pdfDoc, pageIndices);
+                    pages.forEach(page => newPdf.addPage(page));
+                    
+                    // Save new PDF
+                    const newPdfBytes = await newPdf.save();
+                    
+                    // Create download
+                    const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+                    const filename = generateOutputFilename(file.name, selectedPages);
+                    
+                    // If output directory is specified and browser supports it
+                    if (outputDir.value && isFileSystemAccessAvailable) {
+                        try {
+                            // 使用已保存的目录句柄，不再重复选择目录
+                            const dirHandle = currentDirHandle || await window.showDirectoryPicker();
+                            if (!currentDirHandle) {
+                                currentDirHandle = dirHandle;
+                                outputDir.value = dirHandle.name;
+                            }
+                            const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+                            const writable = await fileHandle.createWritable();
+                            await writable.write(blob);
+                            await writable.close();
+                            showNotification(`Saved "${filename}" to directory`, 'success');
+                        } catch (error) {
+                            // Fallback to regular download if directory access fails
+                            saveAs(blob, filename);
+                            showNotification(`Downloaded "${filename}"`, 'success');
+                        }
+                    } else {
+                        // Regular download
+                        saveAs(blob, filename);
+                        showNotification(`Downloaded "${filename}"`, 'success');
+                    }
+                    
+                    // Update progress
+                    processedFiles++;
+                    updateProgress(processedFiles, totalFiles);
+                }
+                
+                showNotification('All files processed successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error extracting pages:', error);
+                showNotification('Error extracting pages: ' + error.message, 'error');
+            } finally {
+                // Reset UI
+                extractBtn.disabled = false;
+                extractText.textContent = 'Extract Pages';
+                extractSpinner.classList.add('hidden');
+                progressText.classList.add('hidden');
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0%';
+            }
+        }
+
+        // Update progress bar
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default values for page inputs
+            singlePageInput.value = '1';
+            pageFromInput.value = '1';
+            
+            // 初始化显示单页输入框
+            toggleRangeOptions();
+            
+            // Check if the page is loaded in an iframe
+            if (window.self !== window.top) {
+                dirWarning.classList.remove('hidden');
+                dirWarning.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Directory selection disabled in embedded frames. Open in a new tab for full functionality.';
+                dirBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>

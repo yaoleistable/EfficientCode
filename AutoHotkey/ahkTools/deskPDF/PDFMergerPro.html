@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF合并专家</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .dropzone {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .dropzone.active {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+        .file-item:hover .file-remove {
+            opacity: 1;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">PDF合并专家</h1>
+            <p class="text-gray-600">轻松合并多个PDF文件为一个文档</p>
+        </header>
+
+        <main>
+            <!-- 上传区域 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <div id="dropzone" class="dropzone rounded-lg p-8 text-center cursor-pointer"
+                        ondragover="event.preventDefault(); this.classList.add('active')"
+                        ondragleave="this.classList.remove('active')"
+                        ondrop="handleDrop(event)">
+                        <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-pdf text-blue-500 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2">拖放PDF文件到这里</h3>
+                        <p class="text-gray-500 mb-4">或</p>
+                        <label for="file-input" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer">
+                            <i class="fas fa-upload mr-2"></i>
+                            选择文件
+                            <input id="file-input" type="file" class="hidden" accept=".pdf" multiple onchange="handleFileSelect(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 文件列表区域 -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-700">已选择的文件</h3>
+                        <div class="text-sm text-gray-500">
+                            已选择 <span id="file-count">0</span> 个文件
+                        </div>
+                    </div>
+
+                    <div id="file-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-400" id="empty-state">
+                            <i class="fas fa-folder-open text-3xl mb-2"></i>
+                            <p>还未选择任何文件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 选项设置区域 -->
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">合并选项</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">输出文件名</label>
+                            <input type="text" id="output-filename" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="合并文档.pdf">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">页面顺序</label>
+                            <select id="page-order" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="normal">正常顺序（文件1, 文件2, ...）</option>
+                                <option value="reverse">反向顺序</option>
+                                <option value="alternate">交替页面</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex items-center">
+                        <input type="checkbox" id="remove-metadata" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="remove-metadata" class="ml-2 block text-sm text-gray-700">移除元数据（作者、创建者等）</label>
+                    </div>
+                </div>
+
+                <!-- 操作按钮区域 -->
+                <div class="p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button id="clear-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled onclick="clearFiles()">
+                            <i class="fas fa-trash-alt mr-2"></i> 清除全部
+                        </button>
+                        
+                        <div class="w-full sm:w-auto flex-1 max-w-md">
+                            <div class="hidden mb-2 text-sm text-gray-500 flex justify-between" id="progress-text">
+                                <span>处理中...</span>
+                                <span id="progress-percent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 hidden" id="progress-container">
+                                <div id="progress-bar" class="progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <button id="merge-btn" class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            disabled onclick="mergePDFs()">
+                            <span id="merge-text">合并PDF</span>
+                            <i id="merge-spinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用说明区域 -->
+            <div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">如何使用PDF合并专家</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-upload text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">上传PDF</h4>
+                            <p class="text-sm text-gray-600">选择或拖放PDF文件到上传区域</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-sliders-h text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">设置选项</h4>
+                            <p class="text-sm text-gray-600">选择输出文件名、页面顺序和其他选项</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                <i class="fas fa-file-download text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-1">合并与下载</h4>
+                            <p class="text-sm text-gray-600">点击"合并PDF"并下载合并后的文档</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>PDF合并专家 - 纯浏览器端 PDF 合并工具，文件不会上传到服务器</p>
+            <p class="mt-1">用 <i class="fas fa-heart text-red-400"></i> 为PDF爱好者打造</p>
+        </footer>
+    </div>
+
+    <script>
+        // Global variables
+        let pdfFiles = [];
+        let fileNames = [];
+        
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const emptyState = document.getElementById('empty-state');
+        const fileCount = document.getElementById('file-count');
+        const clearBtn = document.getElementById('clear-btn');
+        const mergeBtn = document.getElementById('merge-btn');
+        const outputFilename = document.getElementById('output-filename');
+        const progressText = document.getElementById('progress-text');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const mergeText = document.getElementById('merge-text');
+        const mergeSpinner = document.getElementById('merge-spinner');
+
+        // Handle file selection via input
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Handle file drop
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('active');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Process selected files
+        function processFiles(files) {
+            let validFiles = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check if file is PDF
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    // Check for duplicate files
+                    if (!fileNames.includes(file.name)) {
+                        pdfFiles.push(file);
+                        fileNames.push(file.name);
+                        validFiles++;
+                        
+                        // Add to UI
+                        addFileToList(file);
+                    }
+                }
+            }
+            
+            // Update UI
+            updateUIState();
+            
+            // Show notification if some files were skipped
+            if (validFiles < files.length) {
+                showNotification(`Added ${validFiles} PDF file(s). Non-PDF files were skipped.`, 'info');
+            }
+            
+            // Reset file input to allow selecting same files again
+            fileInput.value = '';
+        }
+
+        // Add file to the UI list
+        function addFileToList(file) {
+            // Hide empty state if this is the first file
+            if (pdfFiles.length === 1) {
+                emptyState.classList.add('hidden');
+            }
+            
+            const fileSize = formatFileSize(file.size);
+            const fileId = 'file-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            
+            const fileItem = document.createElement('div');
+            fileItem.id = fileId;
+            fileItem.className = 'file-item group flex items-center justify-between bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors';
+            fileItem.dataset.filename = file.name;
+            
+            fileItem.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center mr-3">
+                        <i class="fas fa-file-pdf text-red-500"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 truncate max-w-xs">${file.name}</div>
+                        <div class="text-xs text-gray-500">${fileSize}</div>
+                    </div>
+                </div>
+                <button 
+                    class="file-remove opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    onclick="removeFile('${fileId}')"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            fileList.appendChild(fileItem);
+        }
+
+        // Remove file from list
+        function removeFile(fileId) {
+            const fileItem = document.getElementById(fileId);
+            if (fileItem) {
+                const filename = fileItem.dataset.filename;
+                const index = fileNames.indexOf(filename);
+                
+                if (index !== -1) {
+                    pdfFiles.splice(index, 1);
+                    fileNames.splice(index, 1);
+                    fileItem.remove();
+                    
+                    // Show empty state if no files left
+                    if (pdfFiles.length === 0) {
+                        emptyState.classList.remove('hidden');
+                    }
+                    
+                    updateUIState();
+                }
+            }
+        }
+
+        // Clear all files
+        function clearFiles() {
+            pdfFiles = [];
+            fileNames = [];
+            fileList.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            updateUIState();
+            showNotification('All files have been removed', 'info');
+        }
+
+        // Update UI state based on files
+        function updateUIState() {
+            fileCount.textContent = pdfFiles.length;
+            
+            // Enable/disable buttons
+            clearBtn.disabled = pdfFiles.length === 0;
+            mergeBtn.disabled = pdfFiles.length < 2;
+            
+            // Set default output filename if empty
+            if (pdfFiles.length >= 2 && !outputFilename.value) {
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                outputFilename.value = `合并文档-${dateStr}.pdf`;
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Show notification
+        // 修改showNotification中的消息
+        function showNotification(message, type = 'success') {
+            // 将英文消息转换为中文
+            const messages = {
+                'Please select at least 2 PDF files to merge': '请至少选择2个PDF文件进行合并',
+                'PDFs merged successfully!': 'PDF合并成功！',
+                'All files have been removed': '已清除所有文件',
+                'Error merging PDFs: ': 'PDF合并错误：'
+            };
+
+            // 如果有对应的中文消息，使用中文消息
+            const translatedMessage = messages[message] || message;
+            
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                error: 'bg-red-100 text-red-800',
+                info: 'bg-blue-100 text-blue-800'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-md shadow-lg ${colors[type]} animate-fade-in`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('animate-fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Merge PDFs function
+        async function mergePDFs() {
+            if (pdfFiles.length < 2) {
+                showNotification('Please select at least 2 PDF files to merge', 'error');
+                return;
+            }
+            
+            // Show loading state
+            mergeBtn.disabled = true;
+            mergeText.textContent = '合并中...';
+            mergeSpinner.classList.remove('hidden');
+            progressText.classList.remove('hidden');
+            progressContainer.classList.remove('hidden');
+            
+            try {
+                const { PDFDocument } = PDFLib;
+                const mergedPdf = await PDFDocument.create();
+                
+                // Set metadata
+                if (document.getElementById('remove-metadata').checked) {
+                    mergedPdf.setTitle('Merged PDF');
+                    mergedPdf.setAuthor('');
+                    mergedPdf.setSubject('');
+                    mergedPdf.setKeywords([]);
+                    mergedPdf.setProducer('');
+                    mergedPdf.setCreator('');
+                } else {
+                    mergedPdf.setTitle('Merged PDF');
+                    mergedPdf.setAuthor('PDF Merger Pro');
+                }
+                
+                const pageOrder = document.getElementById('page-order').value;
+                let totalPages = 0;
+                
+                // First pass to count total pages for progress
+                for (let i = 0; i < pdfFiles.length; i++) {
+                    const file = pdfFiles[i];
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    totalPages += pdfDoc.getPageCount();
+                }
+                
+                let processedPages = 0;
+                
+                // Process files based on page order
+                const processingOrder = pageOrder === 'reverse' ? [...pdfFiles].reverse() : pdfFiles;
+                
+                for (let i = 0; i < processingOrder.length; i++) {
+                    const file = processingOrder[i];
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    
+                    // Handle alternate page order
+                    if (pageOrder === 'alternate') {
+                        const pages = pdfDoc.getPages();
+                        for (let j = 0; j < pages.length; j++) {
+                            const [copiedPage] = await mergedPdf.copyPages(pdfDoc, [j]);
+                            mergedPdf.addPage(copiedPage);
+                            processedPages++;
+                            updateProgress(processedPages, totalPages);
+                        }
+                    } else {
+                        const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                        pages.forEach(page => mergedPdf.addPage(page));
+                        processedPages += pdfDoc.getPageCount();
+                        updateProgress(processedPages, totalPages);
+                    }
+                }
+                
+                // Save merged PDF
+                const mergedPdfBytes = await mergedPdf.save();
+                
+                // Create download
+                const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+                const filename = outputFilename.value || 'merged-document.pdf';
+                saveAs(blob, filename);
+                
+                showNotification('PDFs merged successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error merging PDFs:', error);
+                showNotification('Error merging PDFs: ' + error.message, 'error');
+            } finally {
+                // Reset UI
+                mergeBtn.disabled = false;
+                mergeText.textContent = 'Merge PDFs';
+                mergeSpinner.classList.add('hidden');
+                progressText.classList.add('hidden');
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0%';
+            }
+        }
+
+        // Update progress bar
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes fade-out {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(-10px); }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.3s ease-out forwards;
+                }
+                .animate-fade-out {
+                    animation: fade-out 0.3s ease-in forwards;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>
