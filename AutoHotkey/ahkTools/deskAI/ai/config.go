@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"deskAI/utils" // 添加 utils 包的导入
 	"encoding/json"
 	"fmt"
 	"os"
@@ -24,30 +25,30 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	execPath, err := os.Executable()
 	if err != nil {
-		LogError("获取可执行文件路径失败: %v", err)
+		utils.LogError("获取可执行文件路径失败: %v", err)
 		return nil, fmt.Errorf("获取可执行文件路径失败: %v", err)
 	}
 
 	execDir := filepath.Dir(execPath)
 	configPath := filepath.Join(execDir, "config.json")
 
-	// 将输出改为日志记录
-	LogInfo("正在读取配置文件: %s", configPath)
+	// 使用 utils.LogInfo 替换原来的 LogInfo
+	utils.LogInfo("正在读取配置文件: %s", configPath)
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		LogError("读取配置文件失败: %v", err)
+		utils.LogError("读取配置文件失败: %v", err)
 		return nil, fmt.Errorf("读取配置文件失败: %v", err)
 	}
 
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		LogError("解析配置文件失败: %v", err)
+		utils.LogError("解析配置文件失败: %v", err)
 		return nil, fmt.Errorf("解析配置文件失败: %v", err)
 	}
 
 	if len(config.Models) == 0 {
-		LogError("配置文件中没有找到任何AI模型配置")
+		utils.LogError("配置文件中没有找到任何AI模型配置")
 		return nil, fmt.Errorf("配置文件中没有找到任何AI模型配置")
 	}
 

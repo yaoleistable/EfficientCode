@@ -15,6 +15,11 @@ go build -ldflags="-s -w" -o deskAI.exe deskAI.go
 
 ### TODO:
 
+
+### V0.2.17
+- refactor(logging): 重构日志系统并优化初始化流程
+- 将日志系统从 `ai` 包移动到 `utils` 包，统一日志文件路径和格式。
+- 优化 `ahkTools.ahk` 的初始化流程，将全局变量和日志系统的初始化封装到函数中，提高代码的可维护性和可读性。
 ### V0.2.16
 - 配置文件中增加默认模型设置，方便用户选用不同的AI模型。
 - 修改 createLLM 函数返回类型为 llms.Model

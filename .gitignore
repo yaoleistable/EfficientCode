@@ -281,4 +281,4 @@ go.work.sum
 .env
 config.json
 result.txt
-
+*.log
